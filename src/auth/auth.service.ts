@@ -6,26 +6,30 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
+
 import { genSalt, hash, compare } from "bcrypt";
 
 import { DatabaseService } from "src/database/database.service";
+import { UsersService } from "src/users/users.service";
+import { TokenService } from "./token.service";
 
 import { RegisterUserDto } from "src/auth/dtos/register-user.dto";
-import { UsersService } from "src/users/users.service";
 import { LoginDto } from "./dtos/login.dto";
+
+import { IUser } from "src/interfaces/users";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly dbService: DatabaseService,
     private readonly userService: UsersService,
+    private readonly tokenService: TokenService,
   ) {}
 
-  async registerUser(registerUserDto: RegisterUserDto) {
+  async registerUser(registerUserDto: RegisterUserDto): Promise<IUser> {
     const { name, email, profile_picture, google_id, password } = registerUserDto;
 
-    if (!google_id && !password)
-      throw new BadRequestException("Either password or google id is required!");
+    if (!google_id && !password) throw new BadRequestException("Either password or google id is required!");
 
     const query = `
         INSERT INTO users (name, email, profile_picture, password, google_id)
@@ -39,7 +43,7 @@ export class AuthService {
 
       const result = await this.dbService.query(query, values);
 
-      return result.rows[0];
+      return result.rows[0] as IUser;
     } catch (error) {
       if (
         error.message ===
@@ -72,7 +76,13 @@ export class AuthService {
         throw new UnauthorizedException("Invalid password");
       }
 
-      return true;
+      const accessToken = this.tokenService.generateAccessToken(candidate[0]);
+      const refreshToken = this.tokenService.generateRefreshToken(candidate[0], "mock_session_id");
+
+      return {
+        accessToken,
+        refreshToken,
+      };
     } catch (error) {
       throw error;
     }

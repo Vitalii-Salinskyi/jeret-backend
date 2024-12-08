@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { JwtModule } from "@nestjs/jwt";
 
 import { DatabaseModule } from "./database/database.module";
 import { UsersModule } from "./users/users.module";
@@ -10,6 +11,13 @@ import { AuthModule } from "./auth/auth.module";
     ConfigModule.forRoot({
       envFilePath: `.env.${process.env.NODE_ENV || "dev"}`,
       isGlobal: true,
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>("JWT_SECRET"),
+      }),
     }),
     DatabaseModule,
     UsersModule,

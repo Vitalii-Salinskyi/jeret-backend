@@ -3,9 +3,12 @@ import { ConfigService } from "@nestjs/config";
 
 import { GoogleAuthService } from "./google-auth.service";
 import { AuthService } from "./auth.service";
+import { UsersService } from "src/users/users.service";
+import { TokenService } from "./token.service";
 
 import { RegisterUserDto } from "./dtos/register-user.dto";
-import { UsersService } from "src/users/users.service";
+
+import { IUser } from "src/interfaces/users";
 
 @Controller("auth/google")
 export class GoogleAuthController {
@@ -17,6 +20,7 @@ export class GoogleAuthController {
     private readonly googleAuthService: GoogleAuthService,
     private readonly authService: AuthService,
     private readonly userService: UsersService,
+    private readonly tokenService: TokenService,
   ) {
     this.googleClientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
     this.redirectUri = this.configService.get<string>("GOOGLE_REDIRECT_URL");
@@ -40,7 +44,7 @@ export class GoogleAuthController {
   @Get("callback")
   async googleCallback(@Query("code") code: string) {
     try {
-      const tokenData = await this.googleAuthService.getAccessToken(code);
+      const tokenData = await this.googleAuthService.getGoogleAccessToken(code);
       const {
         email,
         name,
@@ -55,7 +59,22 @@ export class GoogleAuthController {
         google_id,
       };
 
-      return;
+      const candidate = await this.userService.findUserByEmail(email);
+      let user: IUser | undefined;
+
+      if (candidate[0] && candidate[0].google_id === google_id) {
+        user = candidate[0];
+      } else {
+        user = await this.authService.registerUser(registerUserDto);
+      }
+
+      const accessToken = this.tokenService.generateAccessToken(user);
+      const refreshToken = this.tokenService.generateRefreshToken(user, "mock_session_id");
+
+      return {
+        accessToken,
+        refreshToken,
+      };
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

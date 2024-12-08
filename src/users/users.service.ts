@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from "@nestjs/common";
 
 import { DatabaseService } from "src/database/database.service";
+
 import { IUser } from "src/interfaces/users";
 
 @Injectable()

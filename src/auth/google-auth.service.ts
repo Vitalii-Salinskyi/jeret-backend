@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+
 import axios from "axios";
 
 @Injectable()
@@ -14,7 +15,7 @@ export class GoogleAuthService {
     this.redirectUri = this.configService.get<string>("GOOGLE_REDIRECT_URL");
   }
 
-  async getAccessToken(authorizationCode: string) {
+  async getGoogleAccessToken(authorizationCode: string) {
     const tokenUrl = new URL("https://oauth2.googleapis.com/token");
 
     tokenUrl.searchParams.append("code", authorizationCode);
