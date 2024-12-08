@@ -1,10 +1,11 @@
-import { Injectable, OnModuleDestroy } from "@nestjs/common";
+import { Injectable, OnModuleDestroy, Logger } from "@nestjs/common";
 
 import { Pool, PoolClient, QueryResult } from "pg";
 
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
-  private pool: Pool;
+  private readonly logger = new Logger(DatabaseService.name);
+  private readonly pool: Pool;
 
   constructor() {
     this.pool = new Pool({
@@ -30,7 +31,7 @@ export class DatabaseService implements OnModuleDestroy {
     try {
       return await client.query(sql, params);
     } catch (error) {
-      console.error("Database Query Error:", {
+      this.logger.error("Database Query Error:", {
         sql,
         params,
         message: error.message,
@@ -43,9 +44,7 @@ export class DatabaseService implements OnModuleDestroy {
     }
   }
 
-  async transaction<T>(
-    callback: (client: PoolClient) => Promise<T>,
-  ): Promise<T> {
+  async transaction<T>(callback: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await this.getClient();
 
     try {
