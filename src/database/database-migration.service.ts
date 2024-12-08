@@ -16,7 +16,7 @@ export class DatabaseMigrationService {
       const migrationFilePath = join(
         process.cwd(),
         "migrations",
-        "V1__create_users_table.sql",
+        "V2__create_sessions_table_and_indexes.sql",
       );
 
       const migrationSQL = readFileSync(migrationFilePath, "utf-8");
