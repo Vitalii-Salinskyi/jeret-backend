@@ -25,7 +25,7 @@ export class TokenService {
     });
   }
 
-  generateRefreshToken(user: IUser, sessionId: string) {
+  generateRefreshToken(user: IUser, sessionId: number) {
     const payload = {
       id: user.id,
       email: user.email,

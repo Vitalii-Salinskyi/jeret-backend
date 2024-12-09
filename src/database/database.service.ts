@@ -22,7 +22,7 @@ export class DatabaseService implements OnModuleDestroy {
     await this.pool.end();
   }
 
-  async getClient(): Promise<PoolClient> {
+  private async getClient(): Promise<PoolClient> {
     return this.pool.connect();
   }
 

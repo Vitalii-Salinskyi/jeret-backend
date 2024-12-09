@@ -5,6 +5,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { DatabaseModule } from "./database/database.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { AuthModule } from "./auth/auth.module";
     DatabaseModule,
     UsersModule,
     AuthModule,
+    SessionsModule,
   ],
 })
 export class AppModule {}

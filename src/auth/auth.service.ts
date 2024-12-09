@@ -10,10 +10,12 @@ import {
 import { genSalt, hash, compare } from "bcrypt";
 
 import { DatabaseService } from "src/database/database.service";
+import { SessionsService } from "src/sessions/sessions.service";
 import { UsersService } from "src/users/users.service";
 import { TokenService } from "./token.service";
 
 import { RegisterUserDto } from "src/auth/dtos/register-user.dto";
+import { CreateSessionDto } from "src/sessions/dtos/create-session.dto";
 import { LoginDto } from "./dtos/login.dto";
 
 import { IUser } from "src/interfaces/users";
@@ -24,6 +26,7 @@ export class AuthService {
     private readonly dbService: DatabaseService,
     private readonly userService: UsersService,
     private readonly tokenService: TokenService,
+    private readonly sessionService: SessionsService,
   ) {}
 
   async registerUser(registerUserDto: RegisterUserDto): Promise<IUser> {
@@ -56,7 +59,7 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, createSessionDto: CreateSessionDto) {
     try {
       const candidate = await this.userService.findUserByEmail(loginDto.email);
 
@@ -76,8 +79,10 @@ export class AuthService {
         throw new UnauthorizedException("Invalid password");
       }
 
+      const sessionId = await this.sessionService.createSession(candidate[0].id, createSessionDto);
+
       const accessToken = this.tokenService.generateAccessToken(candidate[0]);
-      const refreshToken = this.tokenService.generateRefreshToken(candidate[0], "mock_session_id");
+      const refreshToken = this.tokenService.generateRefreshToken(candidate[0], sessionId);
 
       return {
         accessToken,

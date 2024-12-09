@@ -69,7 +69,7 @@ export class GoogleAuthController {
       }
 
       const accessToken = this.tokenService.generateAccessToken(user);
-      const refreshToken = this.tokenService.generateRefreshToken(user, "mock_session_id");
+      const refreshToken = this.tokenService.generateRefreshToken(user, 3);
 
       return {
         accessToken,
