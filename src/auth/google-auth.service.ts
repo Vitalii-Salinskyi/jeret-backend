@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import axios from "axios";
@@ -31,7 +31,7 @@ export class GoogleAuthService {
 
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to get access token: ${error.message}`);
+      throw new BadRequestException("The Google token is invalid or expired. Please log in again.", error);
     }
   }
 

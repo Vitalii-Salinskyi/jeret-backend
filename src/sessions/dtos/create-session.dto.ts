@@ -1,5 +1,6 @@
 export class CreateSessionDto {
-  location: string;
+  lat: number;
+  long: number;
   device: string;
   ip_address: string;
 }
