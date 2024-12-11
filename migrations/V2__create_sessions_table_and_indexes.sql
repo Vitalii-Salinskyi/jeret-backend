@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP,
 
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 DROP INDEX IF EXISTS idx_users_name;
