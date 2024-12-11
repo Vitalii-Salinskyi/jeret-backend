@@ -19,6 +19,7 @@ import { CreateSessionDto } from "src/sessions/dtos/create-session.dto";
 import { LoginDto } from "./dtos/login.dto";
 
 import { IUser } from "src/interfaces/users";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthService {
@@ -27,10 +28,15 @@ export class AuthService {
     private readonly userService: UsersService,
     private readonly tokenService: TokenService,
     private readonly sessionService: SessionsService,
+    private readonly configService: ConfigService,
   ) {}
 
   async registerUser(registerUserDto: RegisterUserDto): Promise<IUser> {
-    const { name, email, profile_picture, google_id, password } = registerUserDto;
+    const { name, email, google_id, password } = registerUserDto;
+
+    const profile_picture = registerUserDto.profile_picture
+      ? registerUserDto.profile_picture
+      : this.configService.get("DEFAULT_PROFILE_PICTURE_URL");
 
     if (!google_id && !password) throw new BadRequestException("Either password or google id is required!");
 
