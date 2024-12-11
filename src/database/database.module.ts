@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from "@nestjs/common";
+import { Module, OnModuleInit, Logger } from "@nestjs/common";
 
 import { DatabaseService } from "./database.service";
 import { DatabaseMigrationService } from "./database-migration.service";
@@ -8,9 +8,23 @@ import { DatabaseMigrationService } from "./database-migration.service";
   exports: [DatabaseService],
 })
 export class DatabaseModule implements OnModuleInit {
+  private readonly logger = new Logger(DatabaseModule.name);
+
   constructor(private readonly migrationService: DatabaseMigrationService) {}
 
   async onModuleInit() {
-    await this.migrationService.migrate();
+    if (process.argv.includes("--migrate")) {
+      this.logger.debug("Migration start ===============================================================");
+      try {
+        await this.migrationService.migrate();
+        this.logger.log("Database migrations completed successfully");
+      } catch (error) {
+        this.logger.error("Failed to run migration due to:");
+        this.logger.error(error.message);
+      } finally {
+        this.logger.debug("Exit ==========================================================================");
+        process.exit(0);
+      }
+    }
   }
 }

@@ -22,11 +22,7 @@ export class DatabaseMigrationService {
       const migrationSQL = readFileSync(migrationFilePath, "utf-8");
 
       await this.dbService.query(migrationSQL);
-
-      this.logger.log("Database migrations completed successfully");
     } catch (error) {
-      this.logger.error("Failed to run migrations", error);
-
       throw new Error(error);
     }
   }
