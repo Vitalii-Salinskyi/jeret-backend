@@ -35,7 +35,26 @@ export class UsersService {
         throw new NotFoundException("User not found.");
       }
     } catch (error) {
-      console.log(error);
+      if (!(error instanceof InternalServerErrorException)) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async getUserProfile(userId: number): Promise<Partial<IUser>> {
+    const query = `SELECT * FROM users WHERE id = ${userId}`;
+
+    try {
+      const result = await this.dbService.query(query);
+
+      if (!result.rows[0]) throw new NotFoundException("User not found.");
+
+      const { password: _password, google_id: _google_id, ...user } = result.rows[0] as IUser;
+
+      return user;
+    } catch (error) {
       if (!(error instanceof InternalServerErrorException)) {
         throw error;
       }

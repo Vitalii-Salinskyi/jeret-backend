@@ -11,11 +11,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @UseGuards(AuthGuard)
-  @Get()
-  getUsers(@Req() request: Request) {
+  @Get("me")
+  async getUsers(@Req() request: Request) {
     const user = request["user"];
-    console.log(user);
-    return "I'm protected user";
+    return await this.usersService.getUserProfile(user.id);
   }
 
   @UseGuards(AuthGuard)
