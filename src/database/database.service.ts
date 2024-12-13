@@ -63,4 +63,26 @@ export class DatabaseService implements OnModuleDestroy {
       client.release();
     }
   }
+
+  constructUpdateObject<T>(object: T) {
+    const fieldsToUpdate: (keyof T)[] = Object.keys(object) as (keyof T)[];
+
+    const updatedParts: string[] = [];
+    const updatedValues: any[] = [];
+    let paramCounter = 1;
+
+    fieldsToUpdate.forEach((field) => {
+      if (object[field] !== undefined && object[field] !== null) {
+        updatedParts.push(`${field as string} = $${paramCounter}`);
+        updatedValues.push(object[field]);
+        paramCounter++;
+      }
+    });
+
+    return {
+      isEmpty: !updatedParts.length,
+      updatedParts,
+      updatedValues,
+    };
+  }
 }
