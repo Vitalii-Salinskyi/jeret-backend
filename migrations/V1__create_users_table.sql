@@ -8,9 +8,9 @@ BEGIN
       'Web Developer',
       'Android Developer',
       'IOS Developer',
-      'UI/UX Design',
-      '3D Design',
-      '2D Design'
+      'UI/UX Designer',
+      '3D Designer',
+      '2D Designer'
     );
   END IF;
 END $$;

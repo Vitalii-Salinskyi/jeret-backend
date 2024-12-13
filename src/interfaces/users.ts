@@ -1,13 +1,13 @@
-export enum JobRoles {
+export enum JobRolesEnum {
   ProjectManager = "Project Manager",
   FrontendDeveloper = "Front-end Developer",
   BackendDeveloper = "Back-end Developer",
   WebDeveloper = "Web Developer",
   AndroidDeveloper = "Android Developer",
   IOSDeveloper = "IOS Developer",
-  UIUXDesigner = "UI/UX Design",
-  ThreeDDesigner = "3D Design",
-  TwoDDesigner = "2D Design",
+  UIUXDesigner = "UI/UX Designer",
+  ThreeDDesigner = "3D Designer",
+  TwoDDesigner = "2D Designer",
 }
 
 export interface IUser {
@@ -15,7 +15,7 @@ export interface IUser {
   name: string;
   email: string;
   profile_picture?: string;
-  job_role?: string;
+  job_role?: JobRolesEnum;
   password?: string;
   google_id?: string;
   profile_completed: boolean;
