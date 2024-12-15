@@ -13,7 +13,7 @@ export class DatabaseMigrationService {
 
   async migrate() {
     try {
-      const migrationFilePath = join(process.cwd(), "migrations", "V3_trigger_profile_update.sql");
+      const migrationFilePath = join(process.cwd(), "migrations", "V4_create_reviews_table.sql");
 
       const migrationSQL = readFileSync(migrationFilePath, "utf-8");
 
