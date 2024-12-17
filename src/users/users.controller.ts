@@ -6,7 +6,7 @@ import { UsersService } from "./users.service";
 
 import { UpdateUserDto } from "./dtos/upadte-user.dto";
 
-import { JobRolesEnum, UserSortType } from "src/interfaces/users";
+import { IUser, JobRolesEnum, UserSortType } from "src/interfaces/users";
 
 @Controller("users")
 export class UsersController {
@@ -22,13 +22,22 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get()
   async filterUsers(
+    @Req() req: Request,
     @Query("category") category?: JobRolesEnum,
     @Query("sortBy") sortBy?: UserSortType,
     @Query("input") input?: string,
     @Query("page", ParseIntPipe) page?: number,
     @Query("limit", ParseIntPipe) limit?: number,
   ) {
-    return await this.usersService.filterUsers(category, sortBy, input, { page, limit });
+    const user: IUser = req["user"];
+    return await this.usersService.filterUsers(user.id, category, sortBy, input, { page, limit });
+  }
+
+  @UseGuards(AuthGuard)
+  @Get("recent")
+  async getRecentUsers(@Req() req: Request, @Query("limit", ParseIntPipe) limit?: number) {
+    const user: IUser = req["user"];
+    return await this.usersService.getRecentUser(user.id, limit);
   }
 
   @UseGuards(AuthGuard)

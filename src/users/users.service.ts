@@ -66,6 +66,7 @@ export class UsersService {
   }
 
   async filterUsers(
+    userId: number,
     category?: JobRolesEnum,
     sortBy?: UserSortType,
     input?: string,
@@ -73,6 +74,9 @@ export class UsersService {
   ): Promise<PaginationResponse<IUser>> {
     const conditions: string[] = ["is_deleted = $1"];
     const parameters: any[] = [false];
+
+    parameters.push(userId);
+    conditions.push(`id != $${parameters.length}`);
 
     if (category) {
       parameters.push(category);
@@ -113,6 +117,24 @@ export class UsersService {
       if (!(error instanceof InternalServerErrorException)) {
         throw error;
       }
+
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async getRecentUser(userId: number, limit: number = 8): Promise<IUser[]> {
+    const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, name, id
+      FROM users
+      WHERE id != $1
+      ORDER BY created_at DESC
+      LIMIT $2`;
+
+    try {
+      const result = await this.dbService.query(query, [userId, limit]);
+
+      return result.rows as IUser[];
+    } catch (error) {
+      if (!(error instanceof InternalServerErrorException)) throw error;
 
       throw new InternalServerErrorException(error);
     }
