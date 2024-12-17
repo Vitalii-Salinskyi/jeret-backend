@@ -2,8 +2,10 @@ import { Injectable, InternalServerErrorException, NotFoundException } from "@ne
 
 import { DatabaseService } from "src/database/database.service";
 
-import { IUser } from "src/interfaces/users";
 import { UpdateUserDto } from "./dtos/upadte-user.dto";
+
+import { IUser, JobRolesEnum, UserSortType } from "src/interfaces/users";
+import { PaginationParams, PaginationResponse, CountResult } from "src/interfaces";
 
 @Injectable()
 export class UsersService {
@@ -54,6 +56,59 @@ export class UsersService {
       const { password: _password, google_id: _google_id, ...user } = result.rows[0] as IUser;
 
       return user;
+    } catch (error) {
+      if (!(error instanceof InternalServerErrorException)) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  async filterUsers(
+    category?: JobRolesEnum,
+    sortBy?: UserSortType,
+    input?: string,
+    { page = 1, limit = 10 }: PaginationParams = {},
+  ): Promise<PaginationResponse<IUser>> {
+    const conditions: string[] = ["is_deleted = $1"];
+    const parameters: any[] = [false];
+
+    if (category) {
+      parameters.push(category);
+      conditions.push(`job_role = $${parameters.length}`);
+    }
+
+    if (input) {
+      parameters.push(`%${input}%`);
+      conditions.push(`name ILIKE $${parameters.length}`);
+    }
+
+    const baseQuery = `FROM users ${conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""}`;
+
+    const { offset, total } = await this.dbService.getPaginationMetadata(baseQuery, parameters, {
+      page,
+      limit,
+    });
+
+    const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, name, email, id ${baseQuery}    
+      ${sortBy ? `ORDER BY ${sortBy} DESC` : ""}
+      LIMIT $${parameters.length + 1}
+      OFFSET $${parameters.length + 2}
+    `;
+
+    try {
+      const queryParameters = [...parameters, limit, offset];
+
+      const result = await this.dbService.query(query, queryParameters);
+
+      return {
+        data: result.rows as IUser[],
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
     } catch (error) {
       if (!(error instanceof InternalServerErrorException)) {
         throw error;

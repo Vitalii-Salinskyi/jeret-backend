@@ -29,3 +29,5 @@ export interface IUser {
   is_deleted: boolean;
   created_at: Date;
 }
+
+export type UserSortType = "followers_count" | "tasks_completed" | "rating" | "review_count";

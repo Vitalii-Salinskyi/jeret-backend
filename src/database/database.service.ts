@@ -2,6 +2,8 @@ import { Injectable, OnModuleDestroy, Logger } from "@nestjs/common";
 
 import { Pool, PoolClient, QueryResult } from "pg";
 
+import { CountResult, PaginationParams } from "src/interfaces";
+
 @Injectable()
 export class DatabaseService implements OnModuleDestroy {
   private readonly logger = new Logger(DatabaseService.name);
@@ -83,6 +85,24 @@ export class DatabaseService implements OnModuleDestroy {
       isEmpty: !updatedParts.length,
       updatedParts,
       updatedValues,
+    };
+  }
+
+  async getPaginationMetadata(
+    baseQuery: string,
+    parameters: any[],
+    { page = 1, limit = 10 }: PaginationParams = {},
+  ): Promise<{ offset: number; total: number }> {
+    const offset = (page - 1) * limit;
+
+    const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
+
+    const countResult = await this.query<CountResult>(countQuery, parameters);
+    const total = parseInt(countResult.rows[0].total, 10);
+
+    return {
+      offset,
+      total,
     };
   }
 }
