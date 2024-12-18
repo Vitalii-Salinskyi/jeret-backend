@@ -72,8 +72,8 @@ export class UsersService {
     input?: string,
     { page = 1, limit = 10 }: PaginationParams = {},
   ): Promise<PaginationResponse<IUser>> {
-    const conditions: string[] = ["is_deleted = $1"];
-    const parameters: any[] = [false];
+    const conditions: string[] = ["is_deleted = $1", "profile_completed = $2"];
+    const parameters: any[] = [false, true];
 
     parameters.push(userId);
     conditions.push(`id != $${parameters.length}`);
@@ -95,7 +95,7 @@ export class UsersService {
       limit,
     });
 
-    const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, name, email, id ${baseQuery}    
+    const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, description, name, email, id ${baseQuery}    
       ${sortBy ? `ORDER BY ${sortBy} DESC` : ""}
       LIMIT $${parameters.length + 1}
       OFFSET $${parameters.length + 2}
@@ -125,7 +125,7 @@ export class UsersService {
   async getRecentUser(userId: number, limit: number = 8): Promise<IUser[]> {
     const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, name, id
       FROM users
-      WHERE id != $1
+      WHERE id != $1 AND profile_completed = TRUE
       ORDER BY created_at DESC
       LIMIT $2`;
 
