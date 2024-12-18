@@ -6,6 +6,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 import { genSalt, hash, compare } from "bcrypt";
 
@@ -19,7 +20,6 @@ import { CreateSessionDto } from "src/sessions/dtos/create-session.dto";
 import { LoginDto } from "./dtos/login.dto";
 
 import { IUser } from "src/interfaces/users";
-import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AuthService {

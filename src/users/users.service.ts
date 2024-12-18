@@ -28,7 +28,8 @@ export class UsersService {
 
     if (isEmpty) return;
 
-    const query = `UPDATE users SET ${updatedParts.join(", ")} WHERE id = ${userId}`;
+    updatedValues.push(userId);
+    const query = `UPDATE users SET ${updatedParts.join(", ")} WHERE id = $${updatedValues.length}`;
 
     try {
       const result = await this.dbService.query(query, updatedValues);
@@ -46,10 +47,10 @@ export class UsersService {
   }
 
   async getUserProfile(userId: number): Promise<Partial<IUser>> {
-    const query = `SELECT * FROM users WHERE id = ${userId}`;
+    const query = "SELECT * FROM users WHERE id = $1";
 
     try {
-      const result = await this.dbService.query(query);
+      const result = await this.dbService.query(query, [userId]);
 
       if (!result.rows[0]) throw new NotFoundException("User not found.");
 

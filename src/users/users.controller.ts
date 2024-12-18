@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, ParseIntPipe, Patch, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  DefaultValuePipe,
+  Get,
+  HttpCode,
+  ParseIntPipe,
+  Patch,
+  Query,
+  Req,
+  UseGuards,
+} from "@nestjs/common";
 
 import { AuthGuard } from "src/auth/auth.guard";
 
@@ -26,8 +37,8 @@ export class UsersController {
     @Query("category") category?: JobRolesEnum,
     @Query("sortBy") sortBy?: UserSortType,
     @Query("input") input?: string,
-    @Query("page", ParseIntPipe) page?: number,
-    @Query("limit", ParseIntPipe) limit?: number,
+    @Query("page", new DefaultValuePipe(1), ParseIntPipe) page?: number,
+    @Query("limit", new DefaultValuePipe(10), ParseIntPipe) limit?: number,
   ) {
     const user: IUser = req["user"];
     return await this.usersService.filterUsers(user.id, category, sortBy, input, { page, limit });
@@ -35,7 +46,10 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Get("recent")
-  async getRecentUsers(@Req() req: Request, @Query("limit", ParseIntPipe) limit?: number) {
+  async getRecentUsers(
+    @Req() req: Request,
+    @Query("limit", new DefaultValuePipe(8), ParseIntPipe) limit?: number,
+  ) {
     const user: IUser = req["user"];
     return await this.usersService.getRecentUser(user.id, limit);
   }

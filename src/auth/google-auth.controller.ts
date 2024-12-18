@@ -2,14 +2,6 @@ import { Controller, Get, ParseFloatPipe, Query, Redirect } from "@nestjs/common
 import { ConfigService } from "@nestjs/config";
 
 import { GoogleAuthService } from "./google-auth.service";
-import { AuthService } from "./auth.service";
-import { UsersService } from "src/users/users.service";
-import { TokenService } from "./token.service";
-
-import { RegisterUserDto } from "./dtos/register-user.dto";
-
-import { IUser } from "src/interfaces/users";
-import { SessionsService } from "src/sessions/sessions.service";
 
 @Controller("auth/google")
 export class GoogleAuthController {
@@ -19,10 +11,6 @@ export class GoogleAuthController {
   constructor(
     private readonly configService: ConfigService,
     private readonly googleAuthService: GoogleAuthService,
-    private readonly authService: AuthService,
-    private readonly userService: UsersService,
-    private readonly tokenService: TokenService,
-    private readonly sessionsService: SessionsService,
   ) {
     this.googleClientId = this.configService.get<string>("GOOGLE_CLIENT_ID");
     this.redirectUri = this.configService.get<string>("GOOGLE_REDIRECT_URL");
@@ -51,49 +39,6 @@ export class GoogleAuthController {
     @Query("device") device: string,
     @Query("ip_address") ip_address: string,
   ) {
-    try {
-      const tokenData = await this.googleAuthService.getGoogleAccessToken(JSON.parse(code));
-      const {
-        email,
-        name,
-        picture: profile_picture,
-        id: google_id,
-      } = await this.googleAuthService.getUserProfile(tokenData.access_token);
-
-      const registerUserDto: RegisterUserDto = {
-        email,
-        name,
-        profile_picture,
-        google_id,
-      };
-
-      const candidate = await this.userService.findUserByEmail(email);
-      let user: IUser | undefined;
-
-      if (candidate[0] && candidate[0].google_id === google_id) {
-        user = candidate[0];
-      } else {
-        user = await this.authService.registerUser(registerUserDto);
-      }
-
-      const sessionId = await this.sessionsService.createSession(user.id, {
-        lat: lat,
-        long: long,
-        device,
-        ip_address,
-      });
-
-      const accessToken = this.tokenService.generateAccessToken(user);
-      const refreshToken = this.tokenService.generateRefreshToken(user, sessionId);
-
-      debugger;
-
-      return {
-        accessToken,
-        refreshToken,
-      };
-    } catch (error) {
-      throw error;
-    }
+    return this.googleAuthService.googleCallback(code, lat, long, device, ip_address);
   }
 }
