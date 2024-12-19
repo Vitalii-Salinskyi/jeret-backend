@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS sessions (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    ip_address VARCHAR(255),
+    ip_address VARCHAR(45) NOT NULL,
     device VARCHAR(255) NOT NULL,
     location VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

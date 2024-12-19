@@ -37,4 +37,12 @@ export class TokenService {
       expiresIn: "30d",
     });
   }
+
+  async verifyToken(token: string) {
+    const payload = await this.jwtService.verifyAsync(token, {
+      secret: this.configService.get<string>("JWT_SECRET"),
+    });
+
+    return payload;
+  }
 }

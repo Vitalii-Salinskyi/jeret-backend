@@ -1,14 +1,33 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+
 import axios from "axios";
+import { PoolClient } from "pg";
 
 import { CreateSessionDto } from "./dtos/create-session.dto";
+
 import { DatabaseService } from "src/database/database.service";
 
 @Injectable()
 export class SessionsService {
   constructor(private readonly dbService: DatabaseService) {}
 
-  async createSession(userId: number, createSessionDto: CreateSessionDto): Promise<number> {
+  async validateSession(sessionId: number) {
+    const query = `SELECT * FROM sessions WHERE id = $1 AND expires_at > NOW()`;
+
+    try {
+      const result = await this.dbService.query(query, [sessionId]);
+
+      return !!result.rows.length;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async createSession(
+    userId: number,
+    createSessionDto: CreateSessionDto,
+    client?: PoolClient,
+  ): Promise<number> {
     const query = `
         INSERT INTO sessions (user_id, ip_address, device, location, expires_at)
         VALUES ($1, $2, $3, $4, $5) RETURNING id;
@@ -21,7 +40,9 @@ export class SessionsService {
       const location = await this.getUserLocation(createSessionDto.lat, createSessionDto.long);
       const values = [userId, createSessionDto.ip_address, createSessionDto.device, location, now];
 
-      const result = await this.dbService.query<{ id: number }>(query, values);
+      const result = client
+        ? await client.query<{ id: number }>(query, values)
+        : await this.dbService.query<{ id: number }>(query, values);
 
       return result.rows[0].id;
     } catch (error) {
@@ -39,6 +60,22 @@ export class SessionsService {
       const residence = (city ?? town ?? village) + `, ${country}`;
 
       return residence;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async removeSession(sessionId: number, client?: PoolClient) {
+    const query = `DELETE FROM sessions WHERE id = $1`;
+
+    try {
+      const result = client
+        ? await client.query<{ id: number }>(query, [sessionId])
+        : await this.dbService.query(query, [sessionId]);
+
+      if (result.rowCount === 0) {
+        throw new NotFoundException("Session not found or already deleted");
+      }
     } catch (error) {
       throw error;
     }

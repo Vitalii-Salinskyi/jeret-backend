@@ -20,6 +20,7 @@ import { CreateSessionDto } from "src/sessions/dtos/create-session.dto";
 import { LoginDto } from "./dtos/login.dto";
 
 import { IUser } from "src/interfaces/users";
+import { RefreshTokensDto } from "./dtos/refresh-tokens.dto";
 
 @Injectable()
 export class AuthService {
@@ -102,5 +103,46 @@ export class AuthService {
   private async hashPassword(password: string) {
     const salt = await genSalt(10);
     return hash(password, salt);
+  }
+
+  async refreshTokens({ refresh_token: refreshToken, device, ip_address, lat, long }: RefreshTokensDto) {
+    try {
+      const payload = await this.tokenService.verifyToken(refreshToken);
+
+      const { id, email, session_id } = payload;
+
+      const isSessionValid = await this.sessionService.validateSession(session_id);
+
+      if (!isSessionValid) {
+        throw new UnauthorizedException("Session is invalid or expired");
+      }
+
+      const user = await this.userService.findUserByEmail(email);
+
+      if (!user[0]) {
+        throw new NotFoundException(`User with email: ${email} doesn't exist`);
+      }
+
+      let newSessionId: number;
+
+      await this.dbService.transaction(async (client) => {
+        newSessionId = await this.sessionService.createSession(id, { device, ip_address, lat, long }, client);
+        await this.sessionService.removeSession(session_id, client);
+      });
+
+      const accessToken = this.tokenService.generateAccessToken(user[0]);
+      const newRefreshToken = this.tokenService.generateRefreshToken(user[0], newSessionId);
+
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+      };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      throw new UnauthorizedException();
+    }
   }
 }
