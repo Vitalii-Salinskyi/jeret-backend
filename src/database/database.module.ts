@@ -1,7 +1,7 @@
 import { Module, OnModuleInit, Logger } from "@nestjs/common";
 
-import { DatabaseService } from "./database.service";
 import { DatabaseMigrationService } from "./database-migration.service";
+import { DatabaseService } from "./database.service";
 
 @Module({
   providers: [DatabaseService, DatabaseMigrationService],

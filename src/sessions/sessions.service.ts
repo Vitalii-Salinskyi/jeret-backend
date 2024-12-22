@@ -1,11 +1,11 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 
-import axios from "axios";
 import { PoolClient } from "pg";
-
-import { CreateSessionDto } from "./dtos/create-session.dto";
+import axios from "axios";
 
 import { DatabaseService } from "src/database/database.service";
+
+import { CreateSessionDto } from "./dtos/create-session.dto";
 
 @Injectable()
 export class SessionsService {

@@ -15,12 +15,12 @@ import { SessionsService } from "src/sessions/sessions.service";
 import { UsersService } from "src/users/users.service";
 import { TokenService } from "./token.service";
 
-import { RegisterUserDto } from "src/auth/dtos/register-user.dto";
+import { RefreshTokensDto } from "./dtos/refresh-tokens.dto";
 import { CreateSessionDto } from "src/sessions/dtos/create-session.dto";
+import { RegisterUserDto } from "src/auth/dtos/register-user.dto";
 import { LoginDto } from "./dtos/login.dto";
 
 import { IUser } from "src/interfaces/users";
-import { RefreshTokensDto } from "./dtos/refresh-tokens.dto";
 
 @Injectable()
 export class AuthService {
