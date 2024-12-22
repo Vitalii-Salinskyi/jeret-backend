@@ -2,10 +2,11 @@ import { Module, OnModuleInit, Logger } from "@nestjs/common";
 
 import { DatabaseMigrationService } from "./database-migration.service";
 import { DatabaseService } from "./database.service";
+import { RedisService } from "./redis.service";
 
 @Module({
-  providers: [DatabaseService, DatabaseMigrationService],
-  exports: [DatabaseService],
+  providers: [DatabaseService, DatabaseMigrationService, RedisService],
+  exports: [DatabaseService, RedisService],
 })
 export class DatabaseModule implements OnModuleInit {
   private readonly logger = new Logger(DatabaseModule.name);
