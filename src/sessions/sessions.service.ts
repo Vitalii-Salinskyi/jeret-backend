@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 
 import { PoolClient } from "pg";
 import axios from "axios";
@@ -19,7 +19,7 @@ export class SessionsService {
 
       return !!result.rows.length;
     } catch (error) {
-      throw new InternalServerErrorException(error.message);
+      throw error;
     }
   }
 

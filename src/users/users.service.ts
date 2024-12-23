@@ -1,11 +1,13 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 
 import { DatabaseService } from "src/database/database.service";
 
+import { DatabaseException } from "src/exceptions/database.exception";
+
 import { UpdateUserDto } from "./dtos/upadte-user.dto";
 
+import { PaginationParams, PaginationResponse, DatabaseErrorResponse } from "src/interfaces";
 import { IUser, JobRolesEnum, UserSortType } from "src/interfaces/users";
-import { PaginationParams, PaginationResponse, CountResult } from "src/interfaces";
 
 @Injectable()
 export class UsersService {
@@ -19,7 +21,7 @@ export class UsersService {
 
       return result.rows;
     } catch (error) {
-      throw new InternalServerErrorException(error);
+      throw new error();
     }
   }
 
@@ -38,31 +40,22 @@ export class UsersService {
         throw new NotFoundException("User not found.");
       }
     } catch (error) {
-      if (!(error instanceof InternalServerErrorException)) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException(error);
+      throw error;
     }
   }
 
   async getUserProfile(userId: number): Promise<Partial<IUser>> {
-    const query = "SELECT * FROM users WHERE id = $1";
+    const query = `SELECT id, name, email, profile_picture, description, job_role, profile_completed, tasks_completed, tasks_pending, is_online, followers_count, followed, rating, review_count, created_at
+      FROM users WHERE id = $1 AND is_deleted = FALSE`;
 
     try {
       const result = await this.dbService.query(query, [userId]);
 
       if (!result.rows[0]) throw new NotFoundException("User not found.");
 
-      const { password: _password, google_id: _google_id, ...user } = result.rows[0] as IUser;
-
-      return user;
+      return result.rows[0];
     } catch (error) {
-      if (!(error instanceof InternalServerErrorException)) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException(error);
+      throw error;
     }
   }
 
@@ -89,20 +82,21 @@ export class UsersService {
       conditions.push(`name ILIKE $${parameters.length}`);
     }
 
-    const baseQuery = `FROM users ${conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""}`;
-
-    const { offset, total } = await this.dbService.getPaginationMetadata(baseQuery, parameters, {
-      page,
-      limit,
-    });
-
-    const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, description, name, email, id ${baseQuery}    
-      ${sortBy ? `ORDER BY ${sortBy} DESC` : ""}
-      LIMIT $${parameters.length + 1}
-      OFFSET $${parameters.length + 2}
-    `;
-
     try {
+      const baseQuery = `FROM users ${conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""}`;
+
+      const { offset, total } = await this.dbService.getPaginationMetadata(baseQuery, parameters, {
+        page,
+        limit,
+      });
+
+      const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, description, name, email, id
+        ${baseQuery}    
+        ${sortBy ? `ORDER BY ${sortBy} DESC` : ""}
+        LIMIT $${parameters.length + 1}
+        OFFSET $${parameters.length + 2}
+      `;
+
       const queryParameters = [...parameters, limit, offset];
 
       const result = await this.dbService.query(query, queryParameters);
@@ -115,11 +109,17 @@ export class UsersService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (error) {
-      if (!(error instanceof InternalServerErrorException)) {
-        throw error;
+      if (error instanceof DatabaseException) {
+        const dbError = error.getResponse() as DatabaseErrorResponse;
+
+        if (dbError.code === "22P02") {
+          throw new BadRequestException(`${category} is not a valid jor role`);
+        } else if (dbError.code === "42703") {
+          throw new BadRequestException(`${sortBy} is not a valid sort option`);
+        }
       }
 
-      throw new InternalServerErrorException(error);
+      throw error;
     }
   }
 
@@ -135,9 +135,7 @@ export class UsersService {
 
       return result.rows as IUser[];
     } catch (error) {
-      if (!(error instanceof InternalServerErrorException)) throw error;
-
-      throw new InternalServerErrorException(error);
+      throw error;
     }
   }
 }

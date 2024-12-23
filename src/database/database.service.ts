@@ -2,6 +2,8 @@ import { Injectable, OnModuleDestroy, Logger } from "@nestjs/common";
 
 import { Pool, PoolClient, QueryResult } from "pg";
 
+import { DatabaseException } from "src/exceptions/database.exception";
+
 import { CountResult, PaginationParams } from "src/interfaces";
 
 @Injectable()
@@ -38,9 +40,10 @@ export class DatabaseService implements OnModuleDestroy {
         params,
         message: error.message,
         code: error.code,
+        details: error.detail,
       });
 
-      throw new Error(`Database query failed: ${error.message}`);
+      throw new DatabaseException(error);
     } finally {
       client.release();
     }
@@ -60,7 +63,7 @@ export class DatabaseService implements OnModuleDestroy {
     } catch (error) {
       await client.query("ROLLBACK");
 
-      throw error;
+      throw new DatabaseException(error);
     } finally {
       client.release();
     }

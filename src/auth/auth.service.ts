@@ -1,10 +1,9 @@
 import {
+  UnauthorizedException,
   BadRequestException,
   ConflictException,
-  Injectable,
-  InternalServerErrorException,
   NotFoundException,
-  UnauthorizedException,
+  Injectable,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
@@ -14,6 +13,8 @@ import { DatabaseService } from "src/database/database.service";
 import { SessionsService } from "src/sessions/sessions.service";
 import { UsersService } from "src/users/users.service";
 import { TokenService } from "./token.service";
+
+import { DatabaseException } from "src/exceptions/database.exception";
 
 import { RefreshTokensDto } from "./dtos/refresh-tokens.dto";
 import { CreateSessionDto } from "src/sessions/dtos/create-session.dto";
@@ -55,14 +56,11 @@ export class AuthService {
 
       return result.rows[0] as IUser;
     } catch (error) {
-      if (
-        error.message ===
-        'Database query failed: duplicate key value violates unique constraint "users_email_key"'
-      ) {
-        throw new ConflictException(`User with email: ${email} already exist`);
+      if (error.constraint === "users_email_key") {
+        throw new DatabaseException(error, `User with email ${email} already exists`);
       }
 
-      throw new InternalServerErrorException(error.message);
+      throw error;
     }
   }
 
@@ -138,11 +136,7 @@ export class AuthService {
         refreshToken: newRefreshToken,
       };
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        throw error;
-      }
-
-      throw new UnauthorizedException();
+      throw error;
     }
   }
 }

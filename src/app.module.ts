@@ -1,4 +1,5 @@
-import { Module } from "@nestjs/common";
+import { APP_PIPE } from "@nestjs/core";
+import { Module, ValidationPipe } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 
@@ -24,6 +25,17 @@ import { AuthModule } from "./auth/auth.module";
     UsersModule,
     AuthModule,
     SessionsModule,
+  ],
+  providers: [
+    {
+      provide: APP_PIPE,
+      useFactory: () =>
+        new ValidationPipe({
+          transform: true,
+          whitelist: true,
+          forbidNonWhitelisted: true,
+        }),
+    },
   ],
 })
 export class AppModule {}
