@@ -50,7 +50,7 @@ export class GoogleAuthService {
     }
   }
 
-  async getUserProfile(accessToken: string) {
+  private async getUserProfile(accessToken: string) {
     const url = "https://www.googleapis.com/oauth2/v2/userinfo";
 
     try {

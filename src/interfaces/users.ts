@@ -32,3 +32,5 @@ export interface IUser {
 }
 
 export type UserSortType = "followers_count" | "tasks_completed" | "rating" | "review_count";
+
+export type UserStatusType = Record<number, "online" | "offline">;
