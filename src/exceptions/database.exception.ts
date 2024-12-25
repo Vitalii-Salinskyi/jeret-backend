@@ -2,14 +2,27 @@ import { HttpException, HttpStatus } from "@nestjs/common";
 
 import { DatabaseError } from "pg";
 
+import { DatabaseErrorResponse } from "src/interfaces";
+
 export class DatabaseException extends HttpException {
+  private responseBody: DatabaseErrorResponse;
+
   constructor(error: DatabaseError, message?: string) {
     const response = DatabaseException.createResponse(error, message);
     super(response, response.statusCode);
+    this.responseBody = response;
   }
 
-  private static createResponse(error: DatabaseError, message?: string) {
+  private static createResponse(error: DatabaseError, message?: string): DatabaseErrorResponse {
     switch (error.code) {
+      case "23514":
+        return {
+          statusCode: HttpStatus.BAD_REQUEST,
+          error: "Check Violation",
+          message: message || "Check constraint violation",
+          code: error.code,
+          constraints: error?.constraint,
+        };
       case "23505":
         return {
           statusCode: HttpStatus.CONFLICT,
@@ -42,6 +55,14 @@ export class DatabaseException extends HttpException {
           message: message || "Invalid input syntax",
           code: error.code,
         };
+      case "42601":
+        return {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: "Syntax Error",
+          message: message || "SQL syntax error in the query",
+          code: error.code,
+          detail: error.detail,
+        };
       case "42703":
         return {
           statusCode: HttpStatus.BAD_REQUEST,
@@ -58,5 +79,17 @@ export class DatabaseException extends HttpException {
           code: error.code,
         };
     }
+  }
+
+  setMessage(message: string) {
+    this.responseBody.message = message;
+  }
+
+  setStatusCode(code: HttpStatus) {
+    this.responseBody.statusCode = code;
+  }
+
+  getResponse(): DatabaseErrorResponse {
+    return this.responseBody;
   }
 }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { HttpStatus, Injectable, NotFoundException } from "@nestjs/common";
 
 import { DatabaseService } from "src/database/database.service";
 
@@ -6,7 +6,7 @@ import { DatabaseException } from "src/exceptions/database.exception";
 
 import { UpdateUserDto } from "./dtos/upadte-user.dto";
 
-import { PaginationParams, PaginationResponse, DatabaseErrorResponse } from "src/interfaces";
+import { PaginationParams, PaginationResponse } from "src/interfaces";
 import { IUser, JobRolesEnum, UserSortType } from "src/interfaces/users";
 
 @Injectable()
@@ -45,8 +45,10 @@ export class UsersService {
   }
 
   async getUserProfile(userId: number): Promise<Partial<IUser>> {
-    const query = `SELECT id, name, email, profile_picture, description, job_role, profile_completed, tasks_completed, tasks_pending, is_online, followers_count, followed, rating, review_count, created_at
-      FROM users WHERE id = $1 AND is_deleted = FALSE`;
+    const query = `
+      SELECT id, name, email, profile_picture, description, job_role, profile_completed, tasks_completed, tasks_pending, is_online, followers_count, followed, rating, review_count, created_at
+      FROM users WHERE id = $1 AND is_deleted = FALSE
+    `;
 
     try {
       const result = await this.dbService.query(query, [userId]);
@@ -90,7 +92,8 @@ export class UsersService {
         limit,
       });
 
-      const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, description, name, email, id
+      const query = `
+        SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, description, name, email, id
         ${baseQuery}    
         ${sortBy ? `ORDER BY ${sortBy} DESC` : ""}
         LIMIT $${parameters.length + 1}
@@ -110,13 +113,15 @@ export class UsersService {
       };
     } catch (error) {
       if (error instanceof DatabaseException) {
-        const dbError = error.getResponse() as DatabaseErrorResponse;
+        const dbError = error.getResponse();
 
         if (dbError.code === "22P02") {
-          throw new BadRequestException(`${category} is not a valid jor role`);
+          error.setMessage(`${category} is not a valid jor role`);
         } else if (dbError.code === "42703") {
-          throw new BadRequestException(`${sortBy} is not a valid sort option`);
+          error.setMessage(`${sortBy} is not a valid sort option`);
         }
+
+        error.setStatusCode(HttpStatus.BAD_REQUEST);
       }
 
       throw error;
@@ -124,11 +129,13 @@ export class UsersService {
   }
 
   async getRecentUser(userId: number, limit: number = 8): Promise<IUser[]> {
-    const query = `SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, name, id
+    const query = `
+      SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, name, id
       FROM users
       WHERE id != $1 AND profile_completed = TRUE
       ORDER BY created_at DESC
-      LIMIT $2`;
+      LIMIT $2
+      `;
 
     try {
       const result = await this.dbService.query(query, [userId, limit]);

@@ -7,6 +7,7 @@ import { SessionsModule } from "./sessions/sessions.module";
 import { DatabaseModule } from "./database/database.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
+import { FollowersModule } from './followers/followers.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthModule } from "./auth/auth.module";
     UsersModule,
     AuthModule,
     SessionsModule,
+    FollowersModule,
   ],
   providers: [
     {
