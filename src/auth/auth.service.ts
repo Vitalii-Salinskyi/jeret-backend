@@ -56,8 +56,12 @@ export class AuthService {
 
       return result.rows[0] as IUser;
     } catch (error) {
-      if (error.constraint === "users_email_key") {
-        throw new DatabaseException(error, `User with email ${email} already exists`);
+      if (error instanceof DatabaseException) {
+        const dbError = error.getResponse();
+
+        if (dbError.constraints === "users_email_key") {
+          error.setMessage(`User with email ${email} already exists`);
+        }
       }
 
       throw error;

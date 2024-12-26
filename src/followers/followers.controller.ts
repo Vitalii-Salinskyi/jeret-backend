@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   DefaultValuePipe,
@@ -28,17 +29,27 @@ export class FollowersController {
   @UseGuards(AuthGuard)
   @Get()
   async getBulkFollowers(@Req() req: Request, @Query("userIds") userIds: string) {
-    const user = req["user"];
+    try {
+      const user = req["user"];
 
-    const targetUserIds = userIds.split(",").map(Number);
+      if (!userIds) {
+        throw new BadRequestException(
+          "The 'userIds' query parameter is required. Please provide a comma-separated list of user IDs.",
+        );
+      }
 
-    return await this.followersService.getBulkFollowStatus(user.id, targetUserIds);
+      const targetUserIds = userIds.split(",").map(Number);
+
+      return await this.followersService.getBulkFollowStatus(user.id, targetUserIds);
+    } catch (error) {
+      throw error;
+    }
   }
 
   @Get(":userId")
   async getFollowers(
     @Param("userId", ParseIntPipe) userId: number,
-    @Query("type") type: followType = "following",
+    @Query("type") type: followType = "followers",
     @Query("limit", new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query("page", new DefaultValuePipe(1), ParseIntPipe) page?: number,
   ) {

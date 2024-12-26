@@ -21,7 +21,7 @@ export class UsersService {
 
       return result.rows;
     } catch (error) {
-      throw new error();
+      throw error;
     }
   }
 
@@ -87,10 +87,24 @@ export class UsersService {
     try {
       const baseQuery = `FROM users ${conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : ""}`;
 
-      const { offset, total } = await this.dbService.getPaginationMetadata(baseQuery, parameters, {
-        page,
-        limit,
-      });
+      const { offset, total, totalPages } = await this.dbService.getPaginationMetadata(
+        baseQuery,
+        parameters,
+        {
+          page,
+          limit,
+        },
+      );
+
+      if (page > totalPages) {
+        return {
+          data: [],
+          total,
+          page,
+          limit,
+          totalPages,
+        };
+      }
 
       const query = `
         SELECT created_at, tasks_completed, review_count, rating, job_role, profile_picture, description, name, email, id
@@ -109,7 +123,7 @@ export class UsersService {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
       };
     } catch (error) {
       if (error instanceof DatabaseException) {

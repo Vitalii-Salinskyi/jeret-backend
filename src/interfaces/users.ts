@@ -31,6 +31,15 @@ export interface IUser {
   created_at: Date;
 }
 
+export interface IFollowUser {
+  id: number;
+  name: string;
+  email: string;
+  profile_picture?: string;
+  description?: string;
+  job_role?: JobRolesEnum;
+}
+
 export type UserSortType = "followers_count" | "tasks_completed" | "rating" | "review_count";
 export type UserStatusType = Record<number, "online" | "offline">;
 

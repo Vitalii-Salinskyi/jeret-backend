@@ -76,11 +76,10 @@ export class UsersGateway implements OnGatewayConnection {
 
     const statuses = await this.redisClient.mget(keys);
 
-    const result: UserStatusType = {};
-
-    userIds.forEach((userId, index) => {
+    const result: UserStatusType = userIds.reduce((acc, userId, index) => {
       result[userId] = statuses[index] ? "online" : "offline";
-    });
+      return acc;
+    }, {});
 
     return result;
   }

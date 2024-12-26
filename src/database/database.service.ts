@@ -95,17 +95,20 @@ export class DatabaseService implements OnModuleDestroy {
     baseQuery: string,
     parameters: any[],
     { page = 1, limit = 10 }: PaginationParams = {},
-  ): Promise<{ offset: number; total: number }> {
+  ): Promise<{ offset: number; total: number; totalPages: number }> {
     const offset = (page - 1) * limit;
 
     const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
 
     const countResult = await this.query<CountResult>(countQuery, parameters);
+
     const total = parseInt(countResult.rows[0].total, 10);
+    const totalPages = Math.ceil(total / limit);
 
     return {
       offset,
       total,
+      totalPages,
     };
   }
 }
