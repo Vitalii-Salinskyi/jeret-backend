@@ -103,7 +103,8 @@ export class FollowersService {
         SELECT u.id, u.name, u.email, u.profile_picture, u.job_role, u.description FROM followers f
         INNER JOIN users u ON f.${type === "followers" ? "follower_id" : "following_id"} = u.id
         WHERE f.${followClause} = $1
-        LIMIT $2 OFFSET $3
+        LIMIT $2
+        OFFSET $3
       `;
 
       const { rows } = await this.dbService.query(query, parameters);

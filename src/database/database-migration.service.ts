@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 
 import { readFileSync } from "fs";
@@ -8,6 +8,8 @@ import { DatabaseService } from "./database.service";
 
 @Injectable()
 export class DatabaseMigrationService {
+  private readonly logger = new Logger(DatabaseMigrationService.name);
+
   constructor(
     private readonly dbService: DatabaseService,
     private readonly configService: ConfigService,
@@ -20,6 +22,8 @@ export class DatabaseMigrationService {
       if (!migrationFile) {
         throw new InternalServerErrorException("Migration version filename is not configured");
       }
+
+      this.logger.debug(`Migration file: ${migrationFile}`);
 
       const migrationFilePath = join(process.cwd(), "migrations", migrationFile);
 
