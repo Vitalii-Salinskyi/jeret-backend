@@ -23,7 +23,7 @@ export class UsersGateway implements OnGatewayConnection {
   @WebSocketServer()
   private readonly server: Server;
   private readonly redisClient: Redis;
-  private readonly ONLINE_EXPIRY = 20;
+  private readonly ONLINE_EXPIRY = 15;
 
   constructor(private readonly redisService: RedisService) {
     this.redisClient = redisService.getRawClient();
@@ -77,7 +77,7 @@ export class UsersGateway implements OnGatewayConnection {
     const statuses = await this.redisClient.mget(keys);
 
     const result: UserStatusType = userIds.reduce((acc, userId, index) => {
-      result[userId] = statuses[index] ? "online" : "offline";
+      acc[userId] = statuses[index] ? "online" : "offline";
       return acc;
     }, {});
 

@@ -42,6 +42,8 @@ CREATE TABLE IF NOT EXISTS chat_participants (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE INDEX idx_messages_chat_id_created_at ON messages(chat_id, created_at DESC);
+CREATE INDEX idx_messages_chat_id_created_at ON messages(chat_id, created_at ASC);
 CREATE INDEX idx_messages_chat_id ON messages(chat_id);
 CREATE INDEX idx_messages_user_id ON messages(sender_id);
 

@@ -100,15 +100,40 @@ export class DatabaseService implements OnModuleDestroy {
 
     const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
 
-    const countResult = await this.query<CountResult>(countQuery, parameters);
+    try {
+      const countResult = await this.query<CountResult>(countQuery, parameters);
 
-    const total = parseInt(countResult.rows[0].total, 10);
-    const totalPages = Math.ceil(total / limit);
+      const total = parseInt(countResult.rows[0].total, 10);
+      const totalPages = Math.ceil(total / limit);
 
-    return {
-      offset,
-      total,
-      totalPages,
-    };
+      return {
+        offset,
+        total,
+        totalPages,
+      };
+    } catch (error) {
+      throw new DatabaseException(error);
+    }
+  }
+
+  async getNextId(tableName: string, columnName: string = "id"): Promise<number> {
+    const sequenceName = `${tableName}_${columnName}_seq`;
+    const query = `SELECT nextval($1) AS next_id`;
+
+    try {
+      const result = await this.query<{ next_id: string }>(query, [sequenceName]);
+
+      return +result.rows[0].next_id;
+    } catch (error) {
+      this.logger.error("Error getting next ID:", {
+        tableName,
+        columnName,
+        message: error.message,
+        code: error.code,
+        details: error.detail,
+      });
+
+      throw new DatabaseException(error);
+    }
   }
 }

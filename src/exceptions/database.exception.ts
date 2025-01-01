@@ -71,6 +71,14 @@ export class DatabaseException extends HttpException {
           code: error.code,
           detail: error.detail,
         };
+      case "42P02":
+        return {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          error: "PostgreSQL error",
+          code: "42P02",
+          message: message || "Relation or table does not exist",
+          detail: error.detail,
+        };
       default:
         return {
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
