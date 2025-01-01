@@ -7,7 +7,9 @@ import { SessionsModule } from "./sessions/sessions.module";
 import { DatabaseModule } from "./database/database.module";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
-import { FollowersModule } from './followers/followers.module';
+import { FollowersModule } from "./followers/followers.module";
+import { ChatsModule } from "./chats/chat.module";
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { FollowersModule } from './followers/followers.module';
     AuthModule,
     SessionsModule,
     FollowersModule,
+    ChatsModule,
+    MessagesModule,
   ],
   providers: [
     {
