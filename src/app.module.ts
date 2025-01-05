@@ -9,7 +9,8 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { FollowersModule } from "./followers/followers.module";
 import { ChatsModule } from "./chats/chat.module";
-import { MessagesModule } from './messages/messages.module';
+import { MessagesModule } from "./messages/messages.module";
+import { StorageModule } from "./storage/storage.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { MessagesModule } from './messages/messages.module';
     FollowersModule,
     ChatsModule,
     MessagesModule,
+    StorageModule,
   ],
   providers: [
     {

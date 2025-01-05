@@ -18,6 +18,7 @@ import { UserStatusType } from "src/interfaces/users";
   cors: {
     origin: "*",
   },
+  maxHttpBufferSize: 10e8, //! 1 GB mandatory for files transfer
 })
 export class UsersGateway implements OnGatewayConnection {
   @WebSocketServer()
