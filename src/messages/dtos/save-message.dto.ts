@@ -1,4 +1,14 @@
-import { IsBoolean, IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import {
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from "class-validator";
+
+import { IFileDto } from "src/interfaces/chats";
 
 export class SaveMessageDto {
   @IsNotEmpty()
@@ -24,4 +34,8 @@ export class SaveMessageDto {
   @IsOptional()
   @IsBoolean()
   seen?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  files?: IFileDto[];
 }

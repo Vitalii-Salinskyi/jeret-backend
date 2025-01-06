@@ -23,3 +23,18 @@ export interface ClientMessage {
   seen?: boolean;
   id: number;
 }
+
+export interface IFile {
+  id: number;
+  sender_id: number;
+  message_id: number;
+  file_name: string;
+  file_type: string;
+  file_size: number;
+  s3_path: string;
+  uploaded_at: string;
+}
+
+export interface IFileDto extends IFile {
+  buffer: ArrayBuffer;
+}

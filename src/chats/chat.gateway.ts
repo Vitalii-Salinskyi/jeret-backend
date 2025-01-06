@@ -6,12 +6,10 @@ import {
   WebSocketServer,
 } from "@nestjs/websockets";
 
-import Redis from "ioredis";
 import { Server, Socket } from "socket.io";
 
 import { MessagesService } from "src/messages/messages.service";
 import { DatabaseService } from "src/database/database.service";
-import { RedisService } from "src/database/redis.service";
 
 import { UpdateInboxMessageDto } from "src/messages/dtos/update-inbox-message.dto";
 import { SaveMessageDto } from "src/messages/dtos/save-message.dto";
@@ -25,15 +23,11 @@ import { ClientMessage } from "src/interfaces/chats";
 })
 export class ChatGateway {
   @WebSocketServer() server: Server;
-  private readonly redisClient: Redis;
 
   constructor(
     private readonly messagesService: MessagesService,
-    private readonly redisService: RedisService,
     private readonly dbService: DatabaseService,
-  ) {
-    this.redisClient = this.redisService.getRawClient();
-  }
+  ) {}
 
   @SubscribeMessage("inbox:join")
   async joinInbox(@ConnectedSocket() socket: Socket, @MessageBody() userId: number) {
@@ -62,14 +56,18 @@ export class ChatGateway {
     await socket.leave(`chat_${chatId}`);
   }
 
-  @SubscribeMessage("chat:get:next-message-id")
-  async getNextMessageId() {
-    return this.dbService.getNextId("messages");
+  @SubscribeMessage("chat:get:next-id")
+  async getNextMessageId(@MessageBody() tableName: "messages" | "files") {
+    return this.dbService.getNextId(tableName);
   }
 
   @SubscribeMessage("chat:send:message")
   async handleSendMessage(@MessageBody() saveMessageDto: SaveMessageDto) {
-    this.server.to(`chat_${saveMessageDto.chat_id}`).emit("chat:receive:message", saveMessageDto);
+    const files = saveMessageDto.files?.map(({ buffer, ...rest }) => rest) ?? [];
+
+    this.server
+      .to(`chat_${saveMessageDto.chat_id}`)
+      .emit("chat:receive:message", { ...saveMessageDto, files });
 
     await this.messagesService.saveMessage(saveMessageDto);
   }

@@ -107,7 +107,7 @@ export class FollowersService {
         OFFSET $3
       `;
 
-      const { rows } = await this.dbService.query(query, parameters);
+      const { rows } = await this.dbService.query<IFollowUser>(query, parameters);
 
       return {
         data: rows,

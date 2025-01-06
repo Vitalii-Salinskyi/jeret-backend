@@ -15,6 +15,7 @@ export class ChatsService {
             'message', lm.message,
             'seen', lm.seen,
             'created_at', lm.created_at,
+            'files_attached', lm.files_attached,
             'id', lm.id
           )
         ELSE NULL
@@ -22,7 +23,7 @@ export class ChatsService {
       FROM chat_participants cp
       INNER JOIN users u ON u.id = cp.user_id
       LEFT JOIN LATERAL (
-        SELECT m.message, m.seen, m.created_at, m.sender_id, m.id
+        SELECT m.message, m.seen, m.created_at, m.sender_id, m.id, m.files_attached
         FROM messages m
         WHERE m.chat_id = cp.chat_id
         ORDER BY m.created_at DESC
@@ -46,7 +47,20 @@ export class ChatsService {
   }
 
   async getChatMessages(chatId: number) {
-    const query = `SELECT * FROM messages WHERE chat_id = $1 ORDER BY created_at ASC`;
+    const query = `
+      SELECT m.*,
+      COALESCE (
+        (
+          SELECT jsonb_agg(row_to_json(f))
+          FROM files f
+          WHERE f.message_id = m.id
+        ),
+        NULL
+      ) AS files
+      FROM messages m
+      WHERE chat_id = $1
+      ORDER BY created_at ASC
+    `;
 
     try {
       const result = await this.dbService.query(query, [chatId]);

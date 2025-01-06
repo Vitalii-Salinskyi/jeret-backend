@@ -1,25 +1,35 @@
 import { Injectable } from "@nestjs/common";
 
 import { DatabaseService } from "src/database/database.service";
+import { StorageService } from "src/storage/storage.service";
 
 import { SaveMessageDto } from "./dtos/save-message.dto";
 import { EditMessageDto } from "./dtos/edit-message.dto";
+import { FilesService } from "./files.service";
 
 @Injectable()
 export class MessagesService {
-  constructor(private readonly dbService: DatabaseService) {}
+  constructor(
+    private readonly dbService: DatabaseService,
+    private readonly filesService: FilesService,
+  ) {}
 
   async saveMessage(saveMessageDto: SaveMessageDto) {
-    const { chat_id, created_at, message, sender_id, id } = saveMessageDto;
+    const { chat_id, created_at, message, sender_id, id: message_id, files } = saveMessageDto;
 
     const query = `
-      INSERT INTO messages (sender_id, chat_id, message, created_at, id)
+      INSERT INTO messages
+      (sender_id, chat_id, message, created_at, id ${files.length ? ", files_attached" : ""})
       OVERRIDING SYSTEM VALUE
-      VALUES ($1, $2, $3, $4, $5);
+      VALUES ($1, $2, $3, $4, $5${files.length ? ",TRUE" : ""});
     `;
 
+    if (files.length) {
+      await this.filesService.createFileRecords(files, sender_id, message_id);
+    }
+
     try {
-      await this.dbService.query(query, [sender_id, chat_id, message, created_at, id]);
+      await this.dbService.query(query, [sender_id, chat_id, message, created_at, message_id]);
     } catch (error) {
       throw error;
     }
