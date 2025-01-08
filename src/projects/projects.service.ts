@@ -1,19 +1,22 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 
 import { DatabaseService } from "src/database/database.service";
 
 import { CreateProjectDto } from "./dtos/create-project.dto";
 import { UpdateProjectDto } from "./dtos/update-project.dto";
 
+import { IProject } from "src/interfaces/projects";
+import { MemberDto } from "./dtos/memeber.dto";
+
 @Injectable()
 export class ProjectsService {
   constructor(private readonly dbService: DatabaseService) {}
 
-  async getProjectByOwnerId(owner_id: number) {
+  async getProjectByOwnerId(owner_id: number): Promise<IProject[]> {
     const query = `SELECT * FROM projects WHERE owner_id = $1`;
 
     try {
-      const result = await this.dbService.query(query, [owner_id]);
+      const result = await this.dbService.query<IProject>(query, [owner_id]);
 
       return result.rows;
     } catch (error) {
@@ -21,23 +24,27 @@ export class ProjectsService {
     }
   }
 
-  async getProjectMembership(user_id: number) {
+  async getProjectMembership(user_id: number): Promise<IProject[]> {
     const query = `SELECT * FROM projects_members WHERE member_id = $1`;
 
     try {
-      const result = await this.dbService.query(query, [user_id]);
+      const result = await this.dbService.query<IProject>(query, [user_id]);
 
-      return result.rows[0];
+      return result.rows;
     } catch (error) {
       throw error;
     }
   }
 
-  async getProjectById(id: number) {
+  async getProjectById(id: number): Promise<IProject> {
     const query = `SELECT * FROM projects WHERE id = $1`;
 
     try {
-      const result = await this.dbService.query(query, [id]);
+      const result = await this.dbService.query<IProject>(query, [id]);
+
+      if (result.rows.length === 0) {
+        throw new NotFoundException(`Project with ID ${id} not found.`);
+      }
 
       return result.rows[0];
     } catch (error) {
@@ -45,37 +52,46 @@ export class ProjectsService {
     }
   }
 
-  async createProject(createProjectDto: CreateProjectDto) {
-    const query = `INSERT INTO projects (name, owner_id) VALUES($1, $2)`;
+  async createProject(createProjectDto: CreateProjectDto): Promise<IProject> {
+    const query = `
+      INSERT INTO projects (name, owner_id)
+      VALUES($1, $2)
+      RETURNING *
+    `;
 
     try {
-      await this.dbService.query(query, [createProjectDto.name, createProjectDto.owner_id]);
+      const result = await this.dbService.query<IProject>(query, [
+        createProjectDto.name,
+        createProjectDto.owner_id,
+      ]);
+
+      return result.rows[0];
     } catch (error) {
       throw error;
     }
   }
 
-  async addNewMember(user_id: number, project_id: number) {
+  async addNewMember({ project_id, member_id }: MemberDto): Promise<void> {
     const query = `INSERT INTO projects_members (member_id, project_id) VALUES ($1, $2)`;
 
     try {
-      await this.dbService.query(query, [user_id, project_id]);
+      await this.dbService.query(query, [member_id, project_id]);
     } catch (error) {
       throw error;
     }
   }
 
-  async removeMember(project_id: number) {
-    const query = `DELETE FROM projects_members WHERE id = $1`;
+  async removeMember({ project_id, member_id }: MemberDto): Promise<void> {
+    const query = `DELETE FROM projects_members WHERE project_id = $1 AND member_id = $2`;
 
     try {
-      await this.dbService.query(query, [project_id]);
+      await this.dbService.query(query, [project_id, member_id]);
     } catch (error) {
       throw error;
     }
   }
 
-  async updateProjectName(updateProjectDto: UpdateProjectDto) {
+  async updateProjectName(updateProjectDto: UpdateProjectDto): Promise<void> {
     const query = `UPDATE projects SET name = $1 WHERE id = $2`;
 
     try {
@@ -85,10 +101,18 @@ export class ProjectsService {
     }
   }
 
-  async deleteProject(id: number) {
+  async deleteProject(id: number, user_id: number): Promise<void> {
     const query = `DELETE FROM projects WHERE id = $1`;
 
     try {
+      const project = await this.getProjectById(id);
+
+      if (project.owner_id !== user_id) {
+        throw new UnauthorizedException(
+          `You are not authorized to delete the project "${project.name}" (ID: ${id}). Only the project owner can perform this action.`,
+        );
+      }
+
       await this.dbService.query(query, [id]);
     } catch (error) {
       throw error;
