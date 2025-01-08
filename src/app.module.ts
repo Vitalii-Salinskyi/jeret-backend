@@ -11,6 +11,7 @@ import { FollowersModule } from "./followers/followers.module";
 import { ChatsModule } from "./chats/chat.module";
 import { MessagesModule } from "./messages/messages.module";
 import { StorageModule } from "./storage/storage.module";
+import { ProjectsModule } from './projects/projects.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { StorageModule } from "./storage/storage.module";
     ChatsModule,
     MessagesModule,
     StorageModule,
+    ProjectsModule,
   ],
   providers: [
     {
