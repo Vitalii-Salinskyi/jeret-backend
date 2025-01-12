@@ -13,3 +13,5 @@ export interface IProject {
   status: TaskStatus;
   owner_id: number;
 }
+
+export type projectsType = "all" | "own";

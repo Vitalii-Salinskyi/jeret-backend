@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from "@nestjs/common";
 
 import { Request } from "express";
 
@@ -7,9 +7,11 @@ import { AuthGuard } from "src/auth/auth.guard";
 import { ProjectsService } from "./projects.service";
 
 import { CreateProjectDto } from "./dtos/create-project.dto";
+import { UpdateProjectDto } from "./dtos/update-project.dto";
 import { MemberDto } from "./dtos/memeber.dto";
 
 import { IFollowUser } from "src/interfaces/users";
+import { projectsType } from "src/interfaces/projects";
 
 @Controller("projects")
 export class ProjectsController {
@@ -17,16 +19,9 @@ export class ProjectsController {
 
   @UseGuards(AuthGuard)
   @Get()
-  async getProjectByOwnerId(@Req() req: Request) {
+  async getProjectByOwnerId(@Req() req: Request, @Query("type") type: projectsType = "all") {
     const user = req["user"] as IFollowUser;
-    return await this.projectsService.getProjectByOwnerId(user.id);
-  }
-
-  @UseGuards(AuthGuard)
-  @Get("member")
-  async getProjectMembership(@Req() req: Request) {
-    const user = req["user"] as IFollowUser;
-    return await this.projectsService.getProjectMembership(user.id);
+    return await this.projectsService.getProjects(user.id, type);
   }
 
   @UseGuards(AuthGuard)
@@ -39,6 +34,12 @@ export class ProjectsController {
   @Post()
   async createProject(@Body() createProjectDto: CreateProjectDto) {
     return await this.projectsService.createProject(createProjectDto);
+  }
+
+  @UseGuards(AuthGuard)
+  @Patch(":id")
+  async updateProjectName(@Body() updateProjectDto: UpdateProjectDto) {
+    await this.projectsService.updateProjectName(updateProjectDto);
   }
 
   @UseGuards(AuthGuard)

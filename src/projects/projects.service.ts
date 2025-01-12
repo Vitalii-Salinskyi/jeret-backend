@@ -5,30 +5,43 @@ import { DatabaseService } from "src/database/database.service";
 import { CreateProjectDto } from "./dtos/create-project.dto";
 import { UpdateProjectDto } from "./dtos/update-project.dto";
 
-import { IProject } from "src/interfaces/projects";
+import { IProject, projectsType } from "src/interfaces/projects";
 import { MemberDto } from "./dtos/memeber.dto";
 
 @Injectable()
 export class ProjectsService {
   constructor(private readonly dbService: DatabaseService) {}
 
-  async getProjectByOwnerId(owner_id: number): Promise<IProject[]> {
-    const query = `SELECT * FROM projects WHERE owner_id = $1`;
+  async getProjects(owner_id: number, type: projectsType = "all"): Promise<IProject[]> {
+    const ownProjectsQuery = `
+      SELECT *,
+        jsonb_build_object(
+          'pending', (status).pending,
+          'progress', (status).progress,
+          'completed', (status).completed,
+          'review', (status).review
+        ) as status
+      FROM projects 
+      WHERE owner_id = $1
+    `;
+
+    const allProjectsQuery = `
+      SELECT DISTINCT p.*,
+        jsonb_build_object(
+          'pending', (status).pending,
+          'progress', (status).progress,
+          'completed', (status).completed,
+          'review', (status).review
+        ) as status
+      FROM projects_members AS pm
+      INNER JOIN projects AS p ON p.id = pm.project_id
+      WHERE member_id = $1
+    `;
+
+    const query = type === "all" ? ownProjectsQuery : allProjectsQuery;
 
     try {
       const result = await this.dbService.query<IProject>(query, [owner_id]);
-
-      return result.rows;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async getProjectMembership(user_id: number): Promise<IProject[]> {
-    const query = `SELECT * FROM projects_members WHERE member_id = $1`;
-
-    try {
-      const result = await this.dbService.query<IProject>(query, [user_id]);
 
       return result.rows;
     } catch (error) {
