@@ -7,5 +7,5 @@ export class UpdateProjectDto {
 
   @IsNotEmpty()
   @IsNumber()
-  project_id: string;
+  project_id: number;
 }

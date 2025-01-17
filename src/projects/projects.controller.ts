@@ -42,6 +42,11 @@ export class ProjectsController {
     await this.projectsService.updateProjectName(updateProjectDto);
   }
 
+  @Delete("bulk")
+  async bulkDeleteProjects(@Body("ids") ids: number[]) {
+    await this.projectsService.bulkDeleteProjects(ids);
+  }
+
   @UseGuards(AuthGuard)
   @Delete(":id")
   async deleteProject(@Req() req: Request, @Param("id") id: number) {

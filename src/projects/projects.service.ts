@@ -2,11 +2,13 @@ import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/co
 
 import { DatabaseService } from "src/database/database.service";
 
+import { DatabaseException } from "src/exceptions/database.exception";
+
 import { CreateProjectDto } from "./dtos/create-project.dto";
 import { UpdateProjectDto } from "./dtos/update-project.dto";
+import { MemberDto } from "./dtos/memeber.dto";
 
 import { IProject, projectsType } from "src/interfaces/projects";
-import { MemberDto } from "./dtos/memeber.dto";
 
 @Injectable()
 export class ProjectsService {
@@ -38,7 +40,7 @@ export class ProjectsService {
       WHERE member_id = $1
     `;
 
-    const query = type === "all" ? ownProjectsQuery : allProjectsQuery;
+    const query = type === "all" ? allProjectsQuery : ownProjectsQuery;
 
     try {
       const result = await this.dbService.query<IProject>(query, [owner_id]);
@@ -69,7 +71,13 @@ export class ProjectsService {
     const query = `
       INSERT INTO projects (name, owner_id)
       VALUES($1, $2)
-      RETURNING *
+      RETURNING *,
+        jsonb_build_object(
+          'pending', (status).pending,
+          'progress', (status).progress,
+          'completed', (status).completed,
+          'review', (status).review
+        ) as status
     `;
 
     try {
@@ -78,8 +86,22 @@ export class ProjectsService {
         createProjectDto.owner_id,
       ]);
 
+      result.rows[0].members_count++; // send to the client project with the initial user
+
       return result.rows[0];
     } catch (error) {
+      if (error instanceof DatabaseException) {
+        const dbError = error.getResponse();
+
+        if (dbError?.constraints === "unique_project_name_per_owner") {
+          error.setMessage(
+            `You already have a project named "${createProjectDto.name}" in your own projects. Project names must be unique within your own projects.`,
+          );
+        }
+
+        console.log(dbError);
+      }
+
       throw error;
     }
   }
@@ -127,6 +149,16 @@ export class ProjectsService {
       }
 
       await this.dbService.query(query, [id]);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async bulkDeleteProjects(ids: number[]) {
+    const query = `DELETE FROM projects WHERE id = ANY($1::int[])`;
+
+    try {
+      await this.dbService.query(query, [ids]);
     } catch (error) {
       throw error;
     }
