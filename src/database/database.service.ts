@@ -19,6 +19,9 @@ export class DatabaseService implements OnModuleDestroy {
       password: process.env.DB_PASSWORD,
       port: parseInt(process.env.DB_PORT || "5432"),
       max: 12,
+      ssl: {
+        rejectUnauthorized: false,
+      },
     });
   }
 
